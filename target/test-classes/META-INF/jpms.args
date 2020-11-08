@@ -1,0 +1,4 @@
+--patch-module
+FxView=_
+--add-reads
+FxView=ALL-UNNAMED
