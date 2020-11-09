@@ -2,6 +2,7 @@ package com.xingray.fxview;
 
 import com.xingray.view.Canvas;
 import com.xingray.view.View;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 
@@ -9,22 +10,50 @@ public class FxView extends Region implements View {
 
     private final FxCanvas fxCanvas = new FxCanvas();
 
+    private Runnable invalidateTask;
+    private boolean invalidated;
+
+    double locateX;
+    double locateY;
+    double width;
+    double height;
+
     public FxView() {
         super();
         Node node = fxCanvas.getCanvas();
         getChildren().add(node);
-        node.relocate(0, 0);
+        node.relocate(locateX, locateY);
     }
 
     @Override
     public void invalidate() {
-        draw();
+        if (invalidated) {
+            return;
+        }
+        invalidated = true;
+        if (invalidateTask == null) {
+            invalidateTask = new Runnable() {
+                @Override
+                public void run() {
+                    draw();
+                }
+            };
+        }
+        Platform.runLater(invalidateTask);
     }
+
 
     @Override
     public void resizeRelocate(double x, double y, double width, double height) {
         super.resizeRelocate(x, y, width, height);
-        draw();
+        if (locateX == x && locateY == y && this.width == width && this.height == height) {
+            return;
+        }
+        locateX = x;
+        locateY = y;
+        this.width = width;
+        this.height = height;
+        invalidate();
     }
 
     @Override
@@ -37,6 +66,7 @@ public class FxView extends Region implements View {
         fxCanvas.setWidth(getWidth());
         fxCanvas.setHeight(getHeight());
         onDraw(fxCanvas);
+        invalidated = false;
     }
 
 //    @Override
